@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>如何在 JS 循环中正确使用 async 与 await</title>
+</head>
+<body>
+    <script>
+        const fruitBasket = {
+            apple: 20,
+            orange: 10,
+            pear: 15
+        }
+        const getFruitNum = fruit => {
+            return fruitBasket[fruit];
+        }
+        // const numApple1 = getFruitNum('apple');
+        // console.log('numApple', numApple1, new Date());
+
+
+        const sleep = ms => {
+            return new Promise(resolve => setTimeout(resolve, ms))
+        }
+        const getFruitNumFromServer = fruit => {
+            return sleep(2000).then(v => fruitBasket[fruit])
+        }
+        // const numOrange2 = getFruitNumFromServer('orange').then(num => console.log('numOrange', num, new Date()));
+
+        const control = async _ => {
+            console.log('start', new Date());
+            const  numApple3 = await getFruitNumFromServer('apple');
+            console.log('numApple', new Date());
+            const numOrange3 = await getFruitNumFromServer('orange');
+            console.log('numOrange', new Date());
+            const numPear3 = await getFruitNumFromServer('pear');
+            console.log('numPear', new Date());
+            console.log('end', new Date());
+        }
+        // control();
+
+        // 在 for(while/for-of) 循环中使用 await
+        const fruits = ['apple', 'orange', 'pear'];
+        const fruitLoop = async _ => {
+            console.log('start', new Date());
+            for (let i = 0; i < fruits.length ; i ++) {
+                // TODO
+                const fruit = fruits[i];
+                const fruitNum = await getFruitNumFromServer(fruit);
+                console.log(fruit,fruitNum, new Date());
+            }
+            console.log('end', new Date());
+        }
+        // fruitLoop();
+
+        // 在 forEach 循环中使用 await
+        // tips: JavaScript 中的 forEach不支持 promise 感知，也不支持 async 和await，所以不能在 forEach 使用 await 。
+        const foreach = _ => {
+            console.log('start', new Date());
+            fruits.forEach(async item => {
+                // TODO
+                const fruitNum = await getFruitNumFromServer(item);
+                console.log(item, fruitNum, new Date());
+            })
+            console.log('end', new Date())
+        }
+        // foreach();
+
+        // 在 map 中使用 await
+        // tips: 如果你在 map 中使用 await，map 总是返回promises，你必须等待promises 数组得到处理。
+        // 或者通过await Promise.all(arrayOfPromises)来完成此操作。
+        const mapLoop = async _ => {
+            console.log('start', new Date());
+            const promises = await fruits.map(async item => {
+                const fruitNum = await getFruitNumFromServer(item);
+                return fruitNum;
+            })
+            console.log(promises, new Date());
+            const fruitNums2 = await Promise.all(promises);
+            console.log(fruitNums2, new Date());
+            console.log('end', new Date());
+        }
+        // mapLoop();
+
+        // 在 filter 循环中使用 await
+        // 普通版
+        const filterLoop = _ => {
+            console.log('start', new Date());
+            const moreThan20 = fruits.filter(item => {
+                const fruitNum = fruitBasket[item];
+                return fruitNum > 15;
+            })
+            console.log(moreThan20, new Date());
+            console.log('end', new Date());
+        }
+        // filterLoop();
+
+        // promise无效版
+        const filterLoop2 = async _ => {
+            console.log('start', new Date());
+            const moreThan20 = await fruits.filter(async item => {
+                const fruitNum = fruitBasket[item];
+                return fruitNum > 15;
+            })
+            console.log(moreThan20, new Date());
+            console.log('end', new Date());
+        }
+        // filterLoop2();
+
+        // promise改进版
+        const filterLoop3 = async _ => {
+            console.log('start', new Date());
+            const promises = await fruits.map(getFruitNum);
+            const fruitNums = await Promise.all(promises);
+            const moreThan20 = fruits.filter((item, index) => {
+                const fruitNum = fruitNums[index];
+                return fruitNum > 15;
+            })
+            console.log(moreThan20, new Date());
+            console.log('end', new Date());
+        }
+        // filterLoop3();
+
+        // 在 reduce 循环中使用 await
+        // 普通版
+        const reduceLoop = _ => {
+            console.log('start', new Date());
+            const total = fruits.reduce((sum, item) => sum + fruitBasket[item], 0)
+            console.log('total', total, new Date());
+            console.log('end', new Date());
+        }
+        // reduceLoop();
+
+        // promise版
+        const reduceLoop2 = async _ => {
+            console.log('start', new Date());
+            const total = await fruits.reduce(async (promiseSum, item) => {
+                const fruitNum = await fruitBasket[item];
+                const sum = await promiseSum;
+                return sum + fruitNum
+            }, 0)
+            console.log('total', total, new Date());
+            console.log('end', new Date());
+        }
+        // reduceLoop2();
+
+        // promise进阶版
+        const reduceLoop3 = async _ => {
+            console.log('start', new Date());
+            // const promises = fruits.map(getFruitNumFromServer);
+            const promises = fruits.map(getFruitNum);
+            const fruitNums = await Promise.all(promises);
+            const total = fruitNums.reduce((sum, item) => sum + item, 0)
+            console.log('total', total, new Date());
+            console.log('end', new Date());
+        }
+        // reduceLoop3();
+
+        // tips:
+        // 如果你想连续执行await调用，请使用for循环(或任何没有回调的循环)。
+        // 永远不要和forEach一起使用await，而是使用for循环(或任何没有回调的循环)。
+        // 不要在 filter 和 reduce 中使用 await，如果需要，先用 map 进一步骤处理，然后在使用 filter 和 reduce进行处理。
+    </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>JavaScript 高阶函数浅析</title>
+</head>
+<body>
+    <script>
+        // https://mp.weixin.qq.com/s/7IUn7sA0FQ9lybba77UDbg
+
+        // Array.prototype.map
+        const arr1 = [1,2,3,4];
+        const res1 = arr1.map(item => item * 2)
+        console.log('数组*2', res1);
+
+        // Array.prototype.filter
+        const arr2 = [1,2,2,3,2,3,4,5,8,6,7,4,3,2,1,1,2,3,6]
+        const res2 = arr2.filter((item, index, self) => self.indexOf(item) === index);
+        console.log('数组去重1', res2)
+        const res22 = [...new Set(arr2)];
+        console.log('数组去重2', res22);
+
+        // Array.prototype.reduce
+        const arr3 = [1,2,3,4,5,6,7]
+        const res3 = arr3.reduce((sum, item) => sum + item, 0);
+        console.log('数组求和', res3);
+
+        // isType 函数
+        const isType = type => obj => {
+            return Object.prototype.toString.call(obj) == '[object '+ type +']';
+        }
+        console.log('String', isType('String')('asdsd'));
+        console.log('Number', isType('Number')(111));
+        console.log('Array', isType('Array')([123]));
+
+        // add 函数 (用 JS 实现一个无限累加的函数 add)
+        const add = a => {
+            let sum = b => {
+                a = a + b;
+                return sum;
+            }
+            sum.toString = ()=> {
+                return a;
+            }
+            return sum;
+        }
+        console.log('1', add(1));
+        console.log('1+2+3', add(1)(2)(3));
+        console.log('1+2+3+4', add(1)(2)(3)(4));
+
+        // 已知如下数组，编写一个程序将数组扁平化去并除其中重复部分数据，最终得到一个升序且不重复的数组
+        const arr0 = [ [1, 2, 2], [3, 4, 5, 5], [6, 7, 8, 9, [11, 12, [12, 13, [14] ] ] ], 10];
+        const fn1 = arr => Array.from(new Set(arr.flat(Infinity))).sort((a,b )=> a - b);
+        console.log('数组扁平化1', fn1(arr0));
+
+        const fn2 = arr => [...new Set(arr.flat(Infinity))].sort((a,b )=> a - b);
+        console.log('数组扁平化2', fn2(arr0));
+
+        const flatArray = arr => arr.reduce((acc, item) => Array.isArray(item) ? acc.concat(flatArray(item)) : acc.concat(item), []);
+        const fn3 = arr => [...new Set(flatArray(arr))].sort((a,b )=> a - b);
+        console.log('数组扁平化3', fn3(arr0))
+
+        const fn4 = arr => [...new Set(arr.toString().split(',').map(Number))].sort((a,b) => a - b);
+        console.log('数组扁平化4', fn4(arr0))
+
+        const fn5 = arr => {
+            if(arr.some(Array.isArray)) {
+                let result = [];
+                arr.map(item => {
+                    result = result.concat(Array.isArray(item) ? ([...item]) : item)
+                })
+                return fn5(result);
+            }
+            return [...new Set(arr)].sort((a,b) => a - b);
+        }
+        console.log('数组扁平化5', fn5(arr0));
+    </script>
+</body>
+</html>
